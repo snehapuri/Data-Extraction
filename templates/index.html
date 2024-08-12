@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Excel Converter</title>
+    <link rel="stylesheet" href="http://127.0.0.1:5000/static/styles.css">
+</head>
+<body>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f4f8;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload {
+            display: inline-block;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #2980b9;
+        }
+        #convertBtn {
+            margin-top: 1rem;
+            padding: 10px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #convertBtn:hover {
+            background-color: #27ae60;
+        }
+        #fileName {
+            margin-top: 1rem;
+            color: #7f8c8d;
+        }
+    </style>
+    <div class="container">
+        <h1>PDF to Excel Converter</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <label for="fileInput" class="custom-file-upload">
+                Choose PDF Files
+            </label>
+            <input type="file" id="fileInput" name="file" accept=".pdf" multiple>
+            <div>
+                <input type="radio" id="fillablePDF" name="pdfType" value="fillable" checked>
+                <label for="fillablePDF">Fillable PDF</label>
+            </div>
+            <div>
+                <input type="radio" id="regularPDF" name="pdfType" value="regular">
+                <label for="regularPDF">Regular PDF</label>
+            </div>
+            <div>
+                <input type="radio" id="newSheet" name="excelOption" value="new" checked>
+                <label for="newSheet">Create New Excel Sheet</label>
+            </div>
+            <div>
+                <input type="radio" id="appendSheet" name="excelOption" value="append">
+                <label for="appendSheet">Append to Existing Excel Sheet</label>
+            </div>
+            <button type="submit" id="convertBtn">Convert to Excel</button>
+        </form>
+        <div id="fileName"></div>
+    </div>
+    <script>
+        document.getElementById('uploadForm').onsubmit = async function (event) {
+            event.preventDefault();
+            const formData = new FormData();
+            const fileInput = document.getElementById('fileInput');
+            const pdfType = document.querySelector('input[name="pdfType"]:checked').value;
+            const excelOption = document.querySelector('input[name="excelOption"]:checked').value;
+            for (const file of fileInput.files) {
+                formData.append('files', file);
+            }
+            formData.append('pdfType', pdfType);
+            formData.append('excelOption', excelOption);
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'output.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    console.error('Error uploading file:', response.statusText);
+                    alert('Error uploading file: ' + response.statusText);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                alert('Fetch error: ' + error.message);
+            }
+        };
+    </script>
+</body>
+</html>
